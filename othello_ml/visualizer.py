@@ -21,9 +21,12 @@ class Visualizer:
             k = i * 50
             self.image[k, ] = self.image[:, k] = 255
 
-    def render(self, action, turn):
-        self.image[action.y * 50 + 1:action.y * 50 + 50, action.x * 50 +
-                   1:action.x * 50 + 50] = turn * 255
+    def render(self, board):
+        for i in range(8):
+            for j in range(8):
+                self.image[j * 50 + 1:j * 50 + 50, i * 50 + 1:i * 50 +
+                           50] = 128 if board[i][
+                               j] is 0 else 255 if board[i][j] is -1 else 0
         image = Image.fromarray(self.image.astype('uint8'), 'L')
-        image.save(f"{self.path}/task{self.count}.png")
+        image.save(f"{self.path}task{self.count}.png")
         self.count += 1

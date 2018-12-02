@@ -4,8 +4,10 @@ import numpy as np
 
 from keras.models import Sequential
 from keras.layers import Conv2D, BatchNormalization
+from keras.utils import to_categorical
 
 from othello_ml import Othello, Action
+from othello_ml.visualizer import Visualizer
 
 
 class MLAgent:
@@ -21,6 +23,8 @@ class MLAgent:
         othello.agent_reward(self.reward)
 
     def _is_opposites_nearby(self, board, point, opposite):
+        if board[point[0]][point[1]] is not 0:
+            return False
         for dir in self.directions:
             x = point[0] + dir[0]
             y = point[1] + dir[1]
@@ -62,17 +66,21 @@ class MLAgent:
         if self.random_rate > np.random.uniform():
             places = self.get_available_places(board, my_disk)
 
-            action.x, action.y = places[random.randrange(len(places))]
-            return action, False
+            if places:
+                action.x, action.y = places[random.randrange(len(places))]
+                return action, False
+            else:
+                return None, True
 
         self.turn = turn
 
         board = [[1 if i is my_disk else 0 if i is 0 else -1 for i in sl]
                  for sl in board]
         result = self.model.predict(
-            np.reshape(np.array([board]), (1, 8, 8, 1)))
+            np.reshape(np.array([board]), (1, 8, 8, 1)))[:, :, 1]
+        print(result)
         _, action.x, action.y = np.unravel_index(result.argmax(),
-                                                 result.shape)[1:-1]
+                                                 result.shape)[1:]
         return action, False
 
     def reward(self, boards, reward):
@@ -84,7 +92,7 @@ class MLAgent:
         for action, board in boards:
             converted.append([[(1 if i is my_disk else 0 if i is 0 else -1)
                                for i in sl] for sl in board])
-            ac = np.zeros(8, 8)
+            ac = np.zeros((8, 8))
             ac[(action.x, action.y)] = 1
             actions.append(ac)
 
@@ -93,7 +101,7 @@ class MLAgent:
 
         model.fit(
             converted.reshape((-1, 8, 8, 1)),
-            actions.reshape((-1, 8, 8, 1)),
+            to_categorical(actions.reshape((-1, 8, 8, 1))),
             epochs=10)
 
 
@@ -123,7 +131,7 @@ model = Sequential([
     BatchNormalization(),
     Conv2D(32, (3, 3), activation='relu', padding='same'),
     BatchNormalization(),
-    Conv2D(1, (1, 1), activation='softmax', padding='same'),
+    Conv2D(2, (1, 1), activation='softmax', padding='same'),
 ])
 
 model.summary()
@@ -140,5 +148,6 @@ for i in range(num_of_episode):
     othello = Othello(verbose=True)
     agent1 = MLAgent(othello, model)
     agent2 = MLAgent(othello, model)
+    visualizer = Visualizer(othello, path=f'./result/{i}')
 
     othello.play()

@@ -34,9 +34,6 @@ class Othello:
     def _is_valid_action(self, turn, action):
         """validate action is valid
         """
-        if self.verbose:
-            print(turn, action)
-
         if not isinstance(action, Action):
             raise TypeError("Action must be Action class")
 
@@ -53,11 +50,17 @@ class Othello:
                 x = action.x + i * direction[0]
                 y = action.y + i * direction[1]
 
+                if x < 0 or x > 7 or y < 0 or y > 7:
+                    break
+
                 if self.board[x][y] is 0:
-                    return False
+                    break
                 elif self.board[x][y] is agent:
                     # if meet agent's disk and no opposite's dist in between, not valid
-                    return i is not 1
+                    if i is not 1:
+                        return True
+
+                    break
                 else:
                     continue
 
@@ -67,9 +70,6 @@ class Othello:
     def _get_valid_directions(self, turn, action):
         """get valid direcitons by action
         """
-        if self.verbose:
-            print(turn, action)
-
         if not isinstance(action, Action):
             raise TypeError("Action must be Action class")
 
@@ -87,7 +87,7 @@ class Othello:
                 x = action.x + i * direction[0]
                 y = action.y + i * direction[1]
 
-                if action.x < 0 or action.x > 7 or action.y < 0 or action.y > 7:
+                if x < 0 or x > 7 or y < 0 or y > 7:
                     break
 
                 if self.board[x][y] is 0:
@@ -102,8 +102,7 @@ class Othello:
                 else:
                     continue
 
-        # what is wrong?
-        return []
+        return dirs
 
     def _check_end_of_game(self):
         """check no empty place on board
@@ -165,10 +164,11 @@ class Othello:
                                                 invalid_before)
 
             if self.verbose:
-                print(self.board, action)
+                print(turn, action)
 
             if is_pass:
-                pass
+                turn = int(not turn)
+                continue
 
             dirs = self._get_valid_directions(turn, action)
 
@@ -177,7 +177,7 @@ class Othello:
                 self._act(turn, action, dirs)
 
                 for rd in self.renderers:
-                    rd(action, turn)
+                    rd(self.board)
             else:
                 invalid_before = True
                 continue
