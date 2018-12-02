@@ -1,0 +1,7 @@
+{
+  "editor.formatOnSave": true,
+  "python.formatting.provider": "yapf",
+  "python.pythonPath": "env/bin/python",
+  "editor.tabSize": 4,
+  "files.insertFinalNewline": true
+}
