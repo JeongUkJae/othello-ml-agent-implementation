@@ -104,11 +104,14 @@ class Othello:
 
         return dirs
 
-    def _check_end_of_game(self):
+    def _check_end_of_game(self, force=False):
         """check no empty place on board
         """
-        self.is_end_of_game = not bool(
-            sum(sum(x is 0 for x in sl) for sl in self.board))
+        if not force:
+            self.is_end_of_game = not bool(
+                sum(sum(x is 0 for x in sl) for sl in self.board))
+        else:
+            self.is_end_of_game = True
         flatten = sum(self.board, [])
         self.score = 32 - sum(1 for item in flatten if item is 1)
 
@@ -158,6 +161,7 @@ class Othello:
 
         turn = 0
         invalid_before = False
+        pass_both = 0
 
         while not self.is_end_of_game:
             action, is_pass = self.agents[turn](self.board, turn,
@@ -168,6 +172,10 @@ class Othello:
 
             if is_pass:
                 turn = int(not turn)
+                pass_both += 1
+
+                if pass_both == 2:
+                    self._check_end_of_game(force=True)
                 continue
 
             dirs = self._get_valid_directions(turn, action)
@@ -183,10 +191,10 @@ class Othello:
                 continue
 
             # toggle turn
+            pass_both = 0
             turn = int(not turn)
             invalid_before = False
             self._check_end_of_game()
 
-        for i in (0, 1):
-            self.agents_reward[i](self.agents_actions[i],
-                                  self.score if i is 0 else -self.score)
+        for i in range(len(self.agents_reward)):
+            self.agents_reward[i](self.agents_actions[i], -self.score)
